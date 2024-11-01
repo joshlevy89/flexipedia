@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Processor</title>
+</head>
+<body>
+    <h1>Text Processor</h1>
+    <textarea id="inputText" rows="4" cols="50" placeholder="Enter text here..."></textarea><br>
+    <button onclick="processText()">Submit</button>
+    <h3>Result:</h3>
+    <div id="output"></div>
+
+    <script>
+        async function processText() {
+            const text = document.getElementById("inputText").value;
+            const response = await fetch("/process", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text: text })
+            });
+            const result = await response.json();
+            document.getElementById("output").innerText = result.result;
+        }
+    </script>
+</body>
+</html>
