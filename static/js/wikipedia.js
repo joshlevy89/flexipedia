@@ -9,19 +9,18 @@ export async function searchWikipedia() {
     const loading = document.getElementById("loading");
     const error = document.getElementById("error");
     const suggestion = document.getElementById("suggestion");
-    const truncationNotice = document.getElementById("truncationNotice");
+    // const truncationNotice = document.getElementById("truncationNotice");
     const transformingSpinner = document.getElementById("transformingSpinner");
-    const narrativeContent = document.getElementById("narrativeContent");
+    const transformedContent = document.getElementById("transformedContent");
     
     loading.textContent = "Searching...";
     error.textContent = "";
     suggestion.textContent = "";
-    truncationNotice.style.display = "none";
-    narrativeContent.textContent = "";
-    transformingSpinner.style.display = "none";
+    // truncationNotice.classList.add("hidden");
+    transformedContent.textContent = "";
+    transformingSpinner.classList.add("hidden");
     
     try {
-        // First, use opensearch to get suggestions
         const searchEndpoint = `https://en.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(searchTerm)}&limit=1&origin=*`;
         const searchResponse = await fetch(searchEndpoint);
         const [input, titles, descriptions, urls] = await searchResponse.json();
@@ -29,11 +28,10 @@ export async function searchWikipedia() {
         if (titles && titles.length > 0) {
             const suggestedTitle = titles[0];
             
-            if (suggestedTitle.toLowerCase() !== searchTerm.toLowerCase()) {
-                suggestion.textContent = `Showing results for: ${suggestedTitle}`;
-            }
+            // from searching to showing results...
+            suggestion.textContent = `Showing results for: ${suggestedTitle}`;
+            loading.textContent = "";
             
-            // Updated API call with required parameters
             const fullContentEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=${encodeURIComponent(suggestedTitle)}&explaintext=1&origin=*`;
             
             const contentResponse = await fetch(fullContentEndpoint);
@@ -47,19 +45,16 @@ export async function searchWikipedia() {
                 throw new Error("No content received from Wikipedia");
             }
             
-            // Check if content needs truncation
             if (fullContent.length > CHARACTER_LIMIT) {
                 fullContent = fullContent.substring(0, CHARACTER_LIMIT);
-                // Try to end at a complete sentence
                 const lastPeriod = fullContent.lastIndexOf('.');
                 if (lastPeriod > CHARACTER_LIMIT * 0.9) {
                     fullContent = fullContent.substring(0, lastPeriod + 1);
                 }
-                truncationNotice.textContent = `Note: This article has been truncated to ${CHARACTER_LIMIT.toLocaleString()} characters for better processing. You can read the full article on Wikipedia.`;
-                truncationNotice.style.display = "block";
+                // truncationNotice.textContent = `Note: This article has been truncated to ${CHARACTER_LIMIT.toLocaleString()} characters for better processing. You can read the full article on Wikipedia.`;
+                // truncationNotice.classList.remove("hidden");
             }
             
-            document.getElementById("articleTitle").textContent = suggestedTitle;
             document.getElementById("articleContent").textContent = fullContent;
             const link = document.getElementById("articleLink");
             link.href = urls[0];
@@ -79,20 +74,18 @@ export async function searchWikipedia() {
     } catch (e) {
         error.textContent = "Error searching Wikipedia. Please try again.";
         console.error("Error:", e);
-    } finally {
-        loading.textContent = "";
-    }
+    } 
 }
 
 export async function transformText() {
     const error = document.getElementById("error");
     const transformingSpinner = document.getElementById("transformingSpinner");
-    const narrativeContent = document.getElementById("narrativeContent");
+    const transformedContent = document.getElementById("transformedContent");
     const transformType = document.querySelector('input[name="transformType"]:checked').value;
     
     error.textContent = "";
-    transformingSpinner.style.display = "block";
-    narrativeContent.textContent = "";
+    transformingSpinner.classList.remove("hidden");
+    transformedContent.textContent = "";
     
     try {
         const response = await fetch('/process', {
@@ -110,7 +103,17 @@ export async function transformText() {
         const data = await response.json();
         
         if (data.success) {
-            narrativeContent.textContent = data.transformed;
+            // Remove any introductory text, like "Here's a ...:" or "Here is the..."
+            let transformed = data.transformed;
+            const introRegex = /^([^:]*:)\s*/;
+            const match = transformed.match(introRegex);
+            if (match && match[1].length < 100) {
+                transformed = transformed.replace(introRegex, '');
+            }
+            transformed = transformed.replace(introRegex, '');
+            data.transformed = transformed;
+            
+            renderTransformedContent(data.transformed, transformType);
         } else {
             error.textContent = data.error || "Failed to transform text";
         }
@@ -118,14 +121,35 @@ export async function transformText() {
         error.textContent = "Error transforming text. Please try again.";
         console.error("Transform error:", e);
     } finally {
-        transformingSpinner.style.display = "none";
+        transformingSpinner.classList.add("hidden");
     }
 }
 
-// Add at the bottom of the file
+function renderTransformedContent(content, transformType) {
+    const transformedContent = document.getElementById("transformedContent");
+    
+    if (transformType === 'highlights') {
+        // Split into lines and create bullet points
+        const lines = content.split('\n').filter(line => line.trim());
+        const bulletList = document.createElement('ul');
+        bulletList.className = 'list-disc pl-6 space-y-2';
+        
+        lines.forEach(line => {
+            const li = document.createElement('li');
+            // Remove leading "- " or "• " if present
+            li.textContent = line.replace(/^[-•]\s+/, '');
+            bulletList.appendChild(li);
+        });
+        
+        transformedContent.innerHTML = '';
+        transformedContent.appendChild(bulletList);
+    } else {
+        transformedContent.textContent = content;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('searchButton').addEventListener('click', searchWikipedia);
-    // Add event listeners for radio buttons to trigger transform
     document.querySelectorAll('input[name="transformType"]').forEach(radio => {
         radio.addEventListener('change', () => {
             if (currentArticle.content) {

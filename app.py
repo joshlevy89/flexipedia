@@ -15,8 +15,8 @@ def transform_text(text, title, transform_type):
     
     prompts = {
         "narrative": "Transform the article below into something very narratively compelling but reasonably concise.",
-        "simple": "Rewrite the article below in simple, easy-to-understand language while maintaining the key information.",
-        "highlights": "Extract and present the key points and most interesting facts from the article below in a clear, organized way.",
+        "simple": "Rewrite the article below using basic english words and shorter sentences.",
+        "highlights": "Extract 3-5 of the most important and interesting facts from the article below. Format each fact as a bullet point starting with '- '. Present them in a clear list.",
         "kidFriendly": "Rewrite the article below in a fun, engaging way that would be perfect for children to understand, while keeping it educational."
     }
     
@@ -32,7 +32,7 @@ Original text:
                 "model": "claude-3-haiku-20240307",
                 "max_tokens": 1000,
                 "temperature": 0,
-                "system": "Your job is to take the text from Wikipedia articles and transform them in some way. Just output the transformed text, don't include a preamble like 'Here is...'.",
+                "system": "Your job is to take the text from Wikipedia articles and transform them in some way.",
                 "messages": [
                     {
                         "role": "user",

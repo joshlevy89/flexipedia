@@ -3,52 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexipedia</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Flexipedia - Wiki your way!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="/static/js/wikipedia.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'rgba(59, 130, 246, 0.7)',
+                        secondary: '#ff6b6b',
+                        accent: '#48dbfb',
+                        background: '#f1f2f6',
+                    },
+                    fontFamily: {
+                        'sans': ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .rainbow-text {
+            background-image: linear-gradient(to right, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: rainbow-animation 6s linear infinite;
+        }
+        @keyframes rainbow-animation {
+            to {
+                background-position: 200% center;
+            }
+        }
+    </style>
 </head>
-<body>
-    <h1>Flexipedia</h1>
-    <input type="text" id="inputText" placeholder="Enter Wikipedia topic..." class="search-input">
-    <button id="searchButton">Search</button>
-    
-    <div id="output">
-        <div id="loading" class="loading"></div>
-        <div id="suggestion" class="suggestion"></div>
-        <div id="error" class="error"></div>
-        <div id="truncationNotice" class="truncation-notice" style="display: none;"></div>
+<body class="bg-background min-h-screen text-gray-800 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-5xl font-bold text-center mt-8 mb-8 rainbow-text">Flexipedia</h1>
+        <p class="text-center text-xl mb-8 text-gray-700">Transform bland Wikipedia articles into a style of your choice!</p>
         
-        <div class="transform-options">
-            <h3>Choose transformation style:</h3>
-            <div class="radio-group">
-                <input type="radio" id="narrative" name="transformType" value="narrative" checked>
-                <label for="narrative">Narrative</label>
-                
-                <input type="radio" id="simple" name="transformType" value="simple">
-                <label for="simple">Simple</label>
-                
-                <input type="radio" id="highlights" name="transformType" value="highlights">
-                <label for="highlights">Highlights</label>
-                
-                <input type="radio" id="kidFriendly" name="transformType" value="kidFriendly">
-                <label for="kidFriendly">Kid-Friendly</label>
-            </div>
+        <div class="flex justify-center mb-6">
+            <input type="text" id="inputText" placeholder="Enter Wikipedia topic..." 
+                   class="w-full max-w-md px-4 py-2 rounded-l-lg border-2 border-blue-300 focus:outline-none focus:border-blue-500"
+                   onkeypress="if (event.key === 'Enter') document.getElementById('searchButton').click()">
+            <button id="searchButton" class="bg-blue-500 text-white px-6 py-2 rounded-r-lg hover:bg-blue-600 transition duration-300">Search</button>
         </div>
-
-        <div class="content-container">
-            <div class="content-column">
-                <h2>Original Article</h2>
-                <div id="articleTitle"></div>
-                <div id="articleContent"></div>
-                <a id="articleLink" target="_blank"></a>
+        
+        <div id="output">
+            <div id="loading" class="text-gray-600 text-center"></div>
+            <div id="suggestion" class="text-gray-600 italic text-center mb-4"></div>
+            <div id="error" class="text-red-500 text-center mb-4"></div>
+            <!-- <div id="truncationNotice" class="bg-yellow-200 bg-opacity-20 border-l-4 border-yellow-400 text-gray-700 p-4 mb-4 hidden"></div> -->
+            
+            <div class="transform-options bg-white p-6 rounded-lg shadow-md mb-6">
+    <h3 class="text-xl font-semibold mb-4 text-primary text-center">Choose your style</h3>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <label class="flex flex-col items-center space-y-2 cursor-pointer group">
+            <input type="radio" id="highlights" name="transformType" value="highlights" checked class="sr-only peer">
+            <div class="w-16 h-16 rounded-full bg-primary bg-opacity-20 flex items-center justify-center group-hover:bg-opacity-30 peer-checked:bg-primary peer-checked:bg-opacity-100 peer-checked:ring-4 peer-checked:ring-black transition-all duration-300">
+                <span class="text-2xl group-hover:scale-110 transition-transform duration-300">✨</span>
             </div>
-            <div class="content-column">
-                <h2>Tranformed Version</h2>
-                <div id="transformingSpinner" class="loading-container" style="display: none;">
-                    <div class="spinner"></div>
-                    <div>Transforming article...</div>
+            <span class="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors duration-300">Highlights</span>
+        </label>
+        <label class="flex flex-col items-center space-y-2 cursor-pointer group">
+            <input type="radio" id="narrative" name="transformType" value="narrative" class="sr-only peer">
+            <div class="w-16 h-16 rounded-full bg-primary bg-opacity-20 flex items-center justify-center group-hover:bg-opacity-30 peer-checked:bg-primary peer-checked:bg-opacity-100 peer-checked:ring-4 peer-checked:ring-black transition-all duration-300">
+                <span class="text-2xl group-hover:scale-110 transition-transform duration-300">📖</span>
+            </div>
+            <span class="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors duration-300">Narrative</span>
+        </label>
+        <label class="flex flex-col items-center space-y-2 cursor-pointer group">
+            <input type="radio" id="kidFriendly" name="transformType" value="kidFriendly" class="sr-only peer">
+            <div class="w-16 h-16 rounded-full bg-primary bg-opacity-20 flex items-center justify-center group-hover:bg-opacity-30 peer-checked:bg-primary peer-checked:bg-opacity-100 peer-checked:ring-4 peer-checked:ring-black transition-all duration-300">
+                <span class="text-2xl group-hover:scale-110 transition-transform duration-300">🧒</span>
+            </div>
+            <span class="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors duration-300">Kid-Friendly</span>
+        </label>
+        <label class="flex flex-col items-center space-y-2 cursor-pointer group">
+            <input type="radio" id="simple" name="transformType" value="simple" class="sr-only peer">
+            <div class="w-16 h-16 rounded-full bg-primary bg-opacity-20 flex items-center justify-center group-hover:bg-opacity-30 peer-checked:bg-primary peer-checked:bg-opacity-100 peer-checked:ring-4 peer-checked:ring-black transition-all duration-300">
+                <span class="text-2xl group-hover:scale-110 transition-transform duration-300">👌</span>
+            </div>
+            <span class="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors duration-300">Simple</span>
+        </label>
+    </div>
+</div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-black">Original Article</h2>
+                    <div id="articleContent" class="text-gray-700 mb-4"></div>
+                    <a id="articleLink" target="_blank" class="text-accent hover:text-secondary transition duration-300"></a>
                 </div>
-                <div id="narrativeContent"></div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-4 text-black">Transformed Version</h2>
+                    <div id="transformingSpinner" class="hidden">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-secondary mx-auto"></div>
+                        <div class="text-center mt-2 text-gray-600">Transforming...</div>
+                    </div>
+                    <div id="transformedContent" class="text-gray-700"></div>
+                </div>
             </div>
         </div>
     </div>
