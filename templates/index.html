@@ -10,7 +10,6 @@
 <body>
     <h1>Flexipedia</h1>
     <input type="text" id="inputText" placeholder="Enter Wikipedia topic..." class="search-input">
-    <!-- <button onclick="searchWikipedia()">Search</button> -->
     <button id="searchButton">Search</button>
     
     <div id="output">
@@ -19,6 +18,23 @@
         <div id="error" class="error"></div>
         <div id="truncationNotice" class="truncation-notice" style="display: none;"></div>
         
+        <div class="transform-options">
+            <h3>Choose transformation style:</h3>
+            <div class="radio-group">
+                <input type="radio" id="narrative" name="transformType" value="narrative" checked>
+                <label for="narrative">Narrative</label>
+                
+                <input type="radio" id="simple" name="transformType" value="simple">
+                <label for="simple">Simple</label>
+                
+                <input type="radio" id="highlights" name="transformType" value="highlights">
+                <label for="highlights">Highlights</label>
+                
+                <input type="radio" id="kidFriendly" name="transformType" value="kidFriendly">
+                <label for="kidFriendly">Kid-Friendly</label>
+            </div>
+        </div>
+
         <div class="content-container">
             <div class="content-column">
                 <h2>Original Article</h2>
@@ -30,7 +46,7 @@
                 <h2>Tranformed Version</h2>
                 <div id="transformingSpinner" class="loading-container" style="display: none;">
                     <div class="spinner"></div>
-                    <div>Transforming article into narrative form...</div>
+                    <div>Transforming article...</div>
                 </div>
                 <div id="narrativeContent"></div>
             </div>

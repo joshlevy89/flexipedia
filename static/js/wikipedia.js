@@ -69,7 +69,7 @@ export async function searchWikipedia() {
             currentArticle.content = fullContent;
                                 
             if (fullContent.length > 0) {
-                await transformToNarrative();
+                await transformText();
             } else {
                 error.textContent = "Could not retrieve article content.";
             }
@@ -84,10 +84,11 @@ export async function searchWikipedia() {
     }
 }
 
-export async function transformToNarrative() {
+export async function transformText() {
     const error = document.getElementById("error");
     const transformingSpinner = document.getElementById("transformingSpinner");
     const narrativeContent = document.getElementById("narrativeContent");
+    const transformType = document.querySelector('input[name="transformType"]:checked').value;
     
     error.textContent = "";
     transformingSpinner.style.display = "block";
@@ -101,14 +102,15 @@ export async function transformToNarrative() {
             },
             body: JSON.stringify({
                 title: currentArticle.title,
-                text: currentArticle.content
+                text: currentArticle.content,
+                transformType: transformType
             })
         });
         
         const data = await response.json();
         
         if (data.success) {
-            narrativeContent.textContent = data.narrative;
+            narrativeContent.textContent = data.transformed;
         } else {
             error.textContent = data.error || "Failed to transform text";
         }
@@ -123,4 +125,12 @@ export async function transformToNarrative() {
 // Add at the bottom of the file
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('searchButton').addEventListener('click', searchWikipedia);
+    // Add event listeners for radio buttons to trigger transform
+    document.querySelectorAll('input[name="transformType"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (currentArticle.content) {
+                transformText();
+            }
+        });
+    });
 });

@@ -6,15 +6,21 @@ import json
 app = Flask(__name__)
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
 
-def transform_to_narrative(text, title):
-    
+def transform_text(text, title, transform_type):
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",  
+        "anthropic-version": "2023-06-01",
         "content-type": "application/json",
     }
     
-    prompt = f"""Transform the article below into something very narratively compelling but reasonably concise.
+    prompts = {
+        "narrative": "Transform the article below into something very narratively compelling but reasonably concise.",
+        "simple": "Rewrite the article below in simple, easy-to-understand language while maintaining the key information.",
+        "highlights": "Extract and present the key points and most interesting facts from the article below in a clear, organized way.",
+        "kidFriendly": "Rewrite the article below in a fun, engaging way that would be perfect for children to understand, while keeping it educational."
+    }
+    
+    prompt = f"""{prompts.get(transform_type, prompts['narrative'])}
 Original text:
 {text}"""
     
@@ -38,12 +44,9 @@ Original text:
         
         if response.status_code != 200:
             print(f"API Error: Status {response.status_code}")
-            # print("Response:", response.text)
             return None
             
         response_data = response.json()
-        
-        # print("Successful response:", response_data)  # Debug logging
         return response_data['content'][0]['text']
         
     except Exception as e:
@@ -56,20 +59,20 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process_text():
-    
     data = request.get_json()
     title = data.get('title')
     text = data.get('text')
+    transform_type = data.get('transformType', 'narrative')
 
     if not text or not title:
-        print("Missing text or title")  # Debug log
+        print("Missing text or title")
         return jsonify({'error': 'Missing text or title'}), 400
         
-    narrative = transform_to_narrative(text, title)
-    if narrative:
+    transformed_text = transform_text(text, title, transform_type)
+    if transformed_text:
         return jsonify({
             'success': True,
-            'narrative': narrative
+            'transformed': transformed_text
         })
     else:
         return jsonify({
