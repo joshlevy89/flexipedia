@@ -3,27 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Processor</title>
+    <title>FlexiPedia</title>
+    <style>
+        .error { color: red; }
+        .loading { color: #666; }
+        .suggestion { 
+            color: #666;
+            font-style: italic;
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Text Processor</h1>
-    <textarea id="inputText" rows="4" cols="50" placeholder="Enter text here..."></textarea><br>
-    <button onclick="processText()">Submit</button>
-    <h3>Result:</h3>
-    <div id="output"></div>
+    <h1>FlexiPedia</h1>
+    <input type="text" id="inputText" placeholder="Enter Wikipedia topic..." style="width: 300px;">
+    <button onclick="searchWikipedia()">Search</button>
+    
+    <div id="output">
+        <div id="loading" class="loading"></div>
+        <div id="suggestion" class="suggestion"></div>
+        <div id="articleTitle"></div>
+        <div id="articleContent"></div>
+        <a id="articleLink" target="_blank"></a>
+        <div id="error" class="error"></div>
+    </div>
 
     <script>
-        async function processText() {
-            const text = document.getElementById("inputText").value;
-            const response = await fetch("/process", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ text: text })
-            });
-            const result = await response.json();
-            document.getElementById("output").innerText = result.result;
+        async function searchWikipedia() {
+            const searchTerm = document.getElementById("inputText").value.trim();
+            const loading = document.getElementById("loading");
+            const error = document.getElementById("error");
+            const suggestion = document.getElementById("suggestion");
+            
+            loading.textContent = "Searching...";
+            error.textContent = "";
+            suggestion.textContent = "";
+            
+            try {
+                // First, use opensearch to get suggestions
+                const searchEndpoint = `https://en.wikipedia.org/w/api.php?action=opensearch&format=json&search=${encodeURIComponent(searchTerm)}&limit=1&origin=*`;
+                const searchResponse = await fetch(searchEndpoint);
+                const [input, titles, descriptions, urls] = await searchResponse.json();
+                
+                if (titles && titles.length > 0) {
+                    const suggestedTitle = titles[0];
+                    
+                    // If the suggestion is different from the search, show it
+                    if (suggestedTitle.toLowerCase() !== searchTerm.toLowerCase()) {
+                        suggestion.textContent = `Showing results for: ${suggestedTitle}`;
+                    }
+                    
+                    // Now get the full article summary
+                    const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(suggestedTitle)}`;
+                    const response = await fetch(endpoint);
+                    const data = await response.json();
+                    
+                    document.getElementById("articleTitle").textContent = data.title;
+                    document.getElementById("articleContent").textContent = data.extract;
+                    const link = document.getElementById("articleLink");
+                    link.href = data.content_urls.desktop.page;
+                    link.textContent = "Read full article on Wikipedia";
+                } else {
+                    error.textContent = "No matching articles found. Please try a different search term.";
+                }
+            } catch (e) {
+                error.textContent = "Error searching Wikipedia. Please try again.";
+                console.error(e);
+            } finally {
+                loading.textContent = "";
+            }
         }
     </script>
 </body>
