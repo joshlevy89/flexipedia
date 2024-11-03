@@ -100,22 +100,45 @@ export async function transformText() {
             })
         });
         
-        const data = await response.json();
+        const reader = response.body.getReader();
+        let accumulatedContent = '';
+        let firstChunkReceived = false;
         
-        if (data.success) {
-            // Remove any introductory text, like "Here's a ...:" or "Here is the..."
-            let transformed = data.transformed;
-            const introRegex = /^([^:]*:)\s*/;
-            const match = transformed.match(introRegex);
-            if (match && match[1].length < 100) {
-                transformed = transformed.replace(introRegex, '');
-            }
-            transformed = transformed.replace(introRegex, '');
-            data.transformed = transformed;
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
             
-            renderTransformedContent(data.transformed, transformType);
-        } else {
-            error.textContent = data.error || "Failed to transform text";
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+            
+            for (const line of lines) {
+                try {
+                    const data = JSON.parse(line);
+                    if (data.error) {
+                        error.textContent = data.error;
+                        break;
+                    }
+                    if (data.chunk) {
+                        if (!firstChunkReceived) {
+                            transformingSpinner.classList.add("hidden");
+                            firstChunkReceived = true;
+                        }
+                        accumulatedContent += data.chunk;
+                        
+                        // Filter out introductory text before rendering
+                        let filteredContent = accumulatedContent;
+                        const introRegex = /^([^:]*:)\s*/;
+                        const match = filteredContent.match(introRegex);
+                        if (match && match[1].length < 100) {
+                            filteredContent = filteredContent.replace(introRegex, '');
+                        }
+                        
+                        renderTransformedContent(filteredContent, transformType);
+                    }
+                } catch (e) {
+                    console.error('Error parsing line:', e);
+                }
+            }
         }
     } catch (e) {
         error.textContent = "Error transforming text. Please try again.";

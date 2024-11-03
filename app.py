@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 import requests
 import os
 import json
@@ -6,7 +6,7 @@ import json
 app = Flask(__name__)
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
 
-def transform_text(text, title, transform_type):
+def transform_text_stream(text, title, transform_type):
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
@@ -38,20 +38,36 @@ Original text:
                         "role": "user",
                         "content": prompt
                     }
-                ]
-            }
+                ],
+                "stream": True
+            },
+            stream=True
         )
         
         if response.status_code != 200:
-            print(f"API Error: Status {response.status_code}")
-            return None
-            
-        response_data = response.json()
-        return response_data['content'][0]['text']
-        
+            yield json.dumps({"error": f"API Error: Status {response.status_code}"})
+            return
+
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                # Skip if not a data line
+                if not decoded_line.startswith('data: '):
+                    continue
+                    
+                # Remove the "data: " prefix
+                json_str = decoded_line[6:]
+                data = json.loads(json_str)
+                
+                # Extract the text content if available
+                if data.get('type') == 'content_block_delta':
+                    text_delta = data.get('delta', {}).get('text', '')
+                    if text_delta:
+                        yield json.dumps({"chunk": text_delta}) + '\n'
+                    
     except Exception as e:
-        print(f"Error calling Claude API: {str(e)}")
-        return None
+        print(f"Streaming error: {str(e)}")
+        yield json.dumps({"error": str(e)})
 
 @app.route('/')
 def index():
@@ -65,20 +81,12 @@ def process_text():
     transform_type = data.get('transformType', 'narrative')
 
     if not text or not title:
-        print("Missing text or title")
         return jsonify({'error': 'Missing text or title'}), 400
         
-    transformed_text = transform_text(text, title, transform_type)
-    if transformed_text:
-        return jsonify({
-            'success': True,
-            'transformed': transformed_text
-        })
-    else:
-        return jsonify({
-            'success': False,
-            'error': 'Failed to transform text - check server logs for details'
-        }), 500
+    return Response(
+        stream_with_context(transform_text_stream(text, title, transform_type)),
+        content_type='text/event-stream'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
