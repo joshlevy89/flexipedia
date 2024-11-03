@@ -180,4 +180,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    if (window.innerWidth < 768) { // Mobile only
+        const tabs = document.querySelectorAll('[data-tab]');
+        const originalContent = document.getElementById('originalContent');
+        const transformedContainer = document.getElementById('transformedContainer');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active state from all tabs
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary', 'text-primary');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+
+                // Add active state to clicked tab
+                tab.classList.add('border-primary', 'text-primary');
+                tab.classList.remove('border-transparent', 'text-gray-500');
+
+                // Show/hide content based on selected tab
+                if (tab.dataset.tab === 'original') {
+                    originalContent.style.display = 'block';
+                    transformedContainer.style.display = 'none';
+                } else {
+                    originalContent.style.display = 'none';
+                    transformedContainer.style.display = 'block';
+                }
+            });
+        });
+
+        // Set initial state (transformed view by default)
+        originalContent.style.display = 'none';
+        transformedContainer.style.display = 'block';
+    }
 });
