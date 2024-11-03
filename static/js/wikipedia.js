@@ -32,17 +32,22 @@ export async function searchWikipedia() {
             suggestion.textContent = `Showing results for: ${suggestedTitle}`;
             loading.textContent = "";
             
-            const fullContentEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=${encodeURIComponent(suggestedTitle)}&explaintext=1&origin=*`;
+            const fullContentEndpoint = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=${encodeURIComponent(suggestedTitle)}&explaintext=1&redirects=1&origin=*`;
             
             const contentResponse = await fetch(fullContentEndpoint);
             const contentData = await contentResponse.json();
                                 
             const pages = contentData.query.pages;
             const pageId = Object.keys(pages)[0];
+            
+            if (pageId === '-1') {
+                throw new Error("Page not found in Wikipedia");
+            }
+            
             let fullContent = pages[pageId].extract;
             
             if (!fullContent) {
-                throw new Error("No content received from Wikipedia");
+                throw new Error("No content received from Wikipedia. The article might be empty or restricted.");
             }
             
             if (fullContent.length > CHARACTER_LIMIT) {
@@ -72,8 +77,8 @@ export async function searchWikipedia() {
             error.textContent = "No matching articles found. Please try a different search term.";
         }
     } catch (e) {
-        error.textContent = "Error searching Wikipedia. Please try again.";
-        console.error("Error:", e);
+        error.textContent = `Error searching Wikipedia: ${e.message}`;
+        console.error("Error details:", e);
     } 
 }
 
